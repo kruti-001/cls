@@ -1,0 +1,112 @@
+import pickle
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+
+# Load the trained logistic regression model
+filename = 'cls.sav'
+loaded_model = pickle.load(open(filename, 'rb'))
+
+# Assume the scaler was saved after fitting to the training data
+# If you haven't saved the scaler, you would need to re-fit it on your training data X_train
+# For demonstration, let's assume the scaler is available.
+# If not, you might need to adapt this part based on how you handle the scaler.
+# Example of saving a scaler: pickle.dump(std, open('scaler.sav', 'wb'))
+# Example of loading a scaler: loaded_scaler = pickle.load(open('scaler.sav', 'rb'))
+
+# **Important:** You need to have the 'std' object (StandardScaler fitted on X_train) available
+# If you saved the scaler, load it here:
+# try:
+#     loaded_scaler = pickle.load(open('scaler.sav', 'rb'))
+# except FileNotFoundError:
+#     print("Error: scaler.sav not found. Please ensure you have saved the scaler.")
+#     # Or re-fit the scaler on your training data (X_train) if you have it
+#     # from sklearn.preprocessing import StandardScaler
+#     # std = StandardScaler()
+#     # X_train = std.fit_transform(X_train_original) # Assuming X_train_original is your pre-split training data
+#     # loaded_scaler = std
+
+# For this script to run, ensure 'std' (the fitted StandardScaler) is defined before this point
+# in your environment or load it from a saved file.
+
+# Function to preprocess new customer data and make prediction
+def predict_churn(credit_score, country, gender, age, tenure, balance, products_number, credit_card, active_member, estimated_salary):
+    """
+    Predicts churn for a new customer using the trained logistic regression model.
+
+    Args:
+        credit_score (int): Customer's credit score.
+        country (int): Encoded country of the customer.
+        gender (int): Encoded gender of the customer.
+        age (int): Age of the customer.
+        tenure (int): Tenure of the customer.
+        balance (float): Customer's account balance.
+        products_number (int): Number of bank products the customer uses.
+        credit_card (int): Whether the customer has a credit card (1 for yes, 0 for no).
+        active_member (int): Whether the customer is an active member (1 for yes, 0 for no).
+        estimated_salary (float): Estimated salary of the customer.
+
+    Returns:
+        int: Predicted churn value (1 for churn, 0 for no churn).
+    """
+    # Create a DataFrame from the input data
+    new_customer_data = pd.DataFrame({
+        'credit_score': [credit_score],
+        'country': [country],
+        'gender': [gender],
+        'age': [age],
+        'tenure': [tenure],
+        'balance': [balance],
+        'products_number': [products_number],
+        'credit_card': [credit_card],
+        'active_member': [active_member],
+        'estimated_salary': [estimated_salary]
+    })
+
+    # Ensure the columns are in the same order as the training data X
+    # Assuming X is available in your environment or you define its columns
+    # If X is not available, you might need to define the expected column order.
+    try:
+        new_customer_data = new_customer_data[X.columns]
+    except NameError:
+         print("Warning: 'X' (training data columns) not found. Assuming default column order.")
+         # Define expected columns if X is not available
+         expected_columns = ['credit_score', 'country', 'gender', 'age', 'tenure', 'balance', 'products_number', 'credit_card', 'active_member', 'estimated_salary']
+         new_customer_data = new_customer_data[expected_columns]
+
+
+    # Scale the new customer data using the *fitted* scaler
+    # Make sure the 'std' object is the StandardScaler fitted on your training data
+    try:
+        scaled_new_customer_data = std.transform(new_customer_data)
+    except NameError:
+        print("Error: 'std' (StandardScaler) not found. Cannot scale new data.")
+        return None # Or handle the error appropriately
+
+    # Make prediction
+    churn_prediction = loaded_model.predict(scaled_new_customer_data)
+
+    return churn_prediction[0]
+
+# Example usage:
+# Replace with actual values for a new customer
+# Note: Ensure 'country' and 'gender' are encoded as integers based on your training data
+example_prediction = predict_churn(
+    credit_score=700,
+    country=0, # Example encoded country
+    gender=0,  # Example encoded gender
+    age=45,
+    tenure=5,
+    balance=100000.00,
+    products_number=2,
+    credit_card=1,
+    active_member=1,
+    estimated_salary=50000
+)
+
+if example_prediction is not None:
+    print(f"Predicted churn for the example customer: {example_prediction}")
+    if example_prediction == 1:
+        print("This customer is predicted to churn.")
+    else:
+        print("This customer is predicted not to churn.")
